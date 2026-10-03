@@ -1,0 +1,22 @@
+{
+	"name": "placement",
+	"main": "./.output/server/index.mjs",
+	"compatibility_date": "2026-10-02",
+	"compatibility_flags": ["nodejs_compat"],
+	"vars": {
+		"BETTER_AUTH_URL": "https://placement.deepak777.workers.dev"
+	},
+	"assets": {
+		"directory": "./.output/public",
+		"html_handling": "none",
+		"not_found_handling": "none"
+	},
+	"d1_databases": [
+		{
+			"binding": "placement_db",
+			"database_name": "placement-db",
+			"database_id": "50ea7a62-4466-4cae-aa14-b54ec4487bd2",
+			"migrations_dir": "./db/migrations"
+		}
+	]
+}
