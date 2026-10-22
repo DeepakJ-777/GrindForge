@@ -1,5 +1,5 @@
 export default defineEventHandler(async (event) => {
-  const env = event.context.cloudflare?.env
+  const env = event.context.cloudflare?.env as unknown as Cloudflare.Env | undefined
 
   if (!env?.placement_db) {
     setResponseStatus(event, 500)

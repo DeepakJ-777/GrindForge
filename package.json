@@ -8,12 +8,14 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply placement-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply placement-db --remote",
     "deploy": "nuxt build && wrangler deploy"
   },
   "dependencies": {
+    "@nuxt/ui": "^4.11.3",
     "better-auth": "^1.7.7",
     "drizzle-orm": "^0.45.3",
     "hono": "^4.13.12",
@@ -22,9 +24,12 @@
     "vue-router": "^5.3.1"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.139",
     "@types/node": "^26.6.4",
     "drizzle-kit": "^0.31.11",
     "nitro-cloudflare-dev": "^0.2.2",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.3.13",
     "wrangler": "^4.146.0"
   }
 }

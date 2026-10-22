@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import type { InferSession, InferUser } from 'better-auth/types'
+import type { Session, User } from 'better-auth/types'
 import * as schema from '../../db/schema'
 import { getDb } from './db'
 
@@ -16,8 +16,8 @@ declare global {
 }
 
 export type Auth = ReturnType<typeof createAuthInstance>
-export type AuthSession = InferSession<Auth>
-export type AuthUser = InferUser<Auth>
+export type AuthSession = Session
+export type AuthUser = User
 
 function createAuthInstance(env: Cloudflare.Env) {
   const db = getDb(env)
