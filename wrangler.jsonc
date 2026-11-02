@@ -4,7 +4,7 @@
 	"compatibility_date": "2026-10-02",
 	"compatibility_flags": ["nodejs_compat"],
 	"vars": {
-		"BETTER_AUTH_URL": "https://placement.deepak777.workers.dev"
+		"BETTER_AUTH_URL": "https://placement.waterman777.workers.dev"
 	},
 	"assets": {
 		"directory": "./.output/public",
@@ -18,5 +18,14 @@
 			"database_id": "50ea7a62-4466-4cae-aa14-b54ec4487bd2",
 			"migrations_dir": "./db/migrations"
 		}
-	]
+	],
+	"r2_buckets": [
+		{
+			"binding": "RESUME_BUCKET",
+			"bucket_name": "grindforge-resumes"
+		}
+	],
+	"triggers": {
+		"crons": ["*/15 * * * *"]
+	}
 }

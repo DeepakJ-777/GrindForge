@@ -2,11 +2,58 @@
 import { computed } from 'vue'
 
 const { user } = useAuth()
+const settings = useSettings()
+
+const { data: resumeData } = useFetch<{ resume: { filename: string; updatedAt: string } | null }>('/api/resume', {
+  key: 'dashboard:resume',
+  default: () => ({ resume: null }),
+})
 
 const { data: stats } = useFetch<Stats | null>('/api/stats', {
   key: 'dashboard:stats',
   default: () => null,
 })
+
+interface DashboardIntegrations {
+  leetcode: {
+    username: string | null
+    stats: {
+      solved: {
+        all: number
+        easy: number
+        medium: number
+        hard: number
+      }
+    } | null
+    lastSyncedAt: string | null
+  }
+  github: {
+    username: string | null
+    connected: boolean
+    stats: {
+      username: string
+      totalContributions: number
+    } | null
+    lastSyncedAt: string | null
+  }
+}
+
+const { data: integrationsData } = useFetch<DashboardIntegrations>(
+  '/api/integrations',
+  {
+    key: 'dashboard:integrations',
+    default: () => ({
+      leetcode: { username: null, stats: null, lastSyncedAt: null },
+      github: {
+        username: null,
+        connected: false,
+        stats: null,
+        lastSyncedAt: null,
+      },
+    }),
+  },
+)
+
 
 const { data: heatmap } = useFetch<{ days: HeatmapDay[] }>('/api/heatmap', {
   key: 'dashboard:heatmap',
@@ -20,10 +67,14 @@ const { data: logsData, refresh: refreshLogs } = useFetch<{ logs: LogItem[] }>('
 
 const recentLogs = computed(() => logsData.value.logs.slice(0, 6))
 
-function refreshAll() {
-  void refreshLogs()
-  void refreshNuxtData('dashboard:stats')
-  void refreshNuxtData('dashboard:heatmap')
+
+async function refreshAll() {
+  await Promise.all([
+    refreshLogs(),
+    refreshNuxtData('dashboard:stats'),
+    refreshNuxtData('dashboard:heatmap'),
+    refreshNuxtData('dashboard:integrations'),
+  ])
 }
 
 const firstName = computed(() => user.value?.name?.split(/\s+/)[0] ?? 'there')
@@ -54,7 +105,7 @@ useHead({ title: 'Dashboard' })
     </section>
 
     <!-- Stats -->
-    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <StatCard
         label="Current streak"
         :value="stats?.currentStreak ?? 0"
@@ -73,12 +124,30 @@ useHead({ title: 'Dashboard' })
         icon="i-lucide-calendar-check"
         hint="total days logged"
       />
-      <StatCard
+      <NuxtLink to="/resume" class="block"><StatCard
         label="Resume"
-        value="Not uploaded"
+        :value="resumeData?.resume?.filename ?? 'Not uploaded'"
         icon="i-lucide-file-text"
-        hint="uploads coming soon"
-      />
+        :hint="resumeData?.resume ? `Updated ${new Date(resumeData.resume.updatedAt).toLocaleDateString()}` : 'Upload your resume'"
+      /></NuxtLink>
+
+<StatCard
+  label="LeetCode solved"
+  :value="integrationsData?.leetcode.stats?.solved.all ?? 0"
+  icon="i-lucide-code-2"
+  :hint="integrationsData?.leetcode.username
+    ? `@${integrationsData.leetcode.username}`
+    : 'Connect your profile'"
+/>
+<StatCard
+  label="GitHub contributions"
+  :value="integrationsData?.github.stats?.totalContributions ?? 0"
+  icon="i-lucide-git-commit-horizontal"
+  :hint="integrationsData?.github.connected
+    ? `@${integrationsData.github.username}`
+    : 'Connect your account'"
+/>
+
     </section>
 
     <!-- Quick log + rail -->
@@ -86,7 +155,7 @@ useHead({ title: 'Dashboard' })
       <div class="xl:col-span-2">
         <QuickLog @saved="refreshAll" />
       </div>
-      <InfoRail :logs="logsData.logs" />
+      <InfoRail :logs="logsData.logs" :timezone="settings.timezone" />
     </section>
 
     <!-- Heatmap -->

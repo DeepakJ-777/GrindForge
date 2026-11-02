@@ -22,6 +22,55 @@
       "when": 1790968370428,
       "tag": "0002_daily_logs",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792649974205,
+      "tag": "0003_worried_korg",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792664640425,
+      "tag": "0004_skinny_norrin_radd",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792667316641,
+      "tag": "0005_lazy_firestar",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1792668683012,
+      "tag": "0006_talented_mandroid",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1792691806441,
+      "tag": "0007_certain_reaper",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1793606669916,
+      "tag": "0008_settings_interviews",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1793607131271,
+      "tag": "0009_rate_limit_cleanup_test_table",
+      "breakpoints": true
     }
   ]
 }

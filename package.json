@@ -9,17 +9,20 @@
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply placement-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply placement-db --remote",
     "deploy": "nuxt build && wrangler deploy"
   },
   "dependencies": {
+    "@google/genai": "^2.30.0",
     "@nuxt/ui": "^4.11.3",
     "better-auth": "^1.7.7",
     "drizzle-orm": "^0.45.3",
     "hono": "^4.13.12",
     "nuxt": "^4.5.2",
+    "pdfjs-dist": "^6.4.299",
     "vue": "^3.5.43",
     "vue-router": "^5.3.1"
   },

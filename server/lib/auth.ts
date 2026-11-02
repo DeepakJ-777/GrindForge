@@ -11,6 +11,10 @@ declare global {
       BETTER_AUTH_URL?: string
       GOOGLE_CLIENT_ID?: string
       GOOGLE_CLIENT_SECRET?: string
+      GROQ_API_KEY: string
+      GEMINI_API_KEY: string
+      CRON_SECRET: string
+      RESUME_BUCKET: R2Bucket
     }
   }
 }
@@ -38,14 +42,10 @@ function createAuthInstance(env: Cloudflare.Env) {
   })
 }
 
-const authCache = new WeakMap<object, Auth>()
-
 /** Auth instance bound to a request's Cloudflare env (D1 + secrets). */
 export function getAuth(env: Cloudflare.Env): Auth {
-  let auth = authCache.get(env)
-  if (!auth) {
-    auth = createAuthInstance(env)
-    authCache.set(env, auth)
-  }
-  return auth
+  // The local Miniflare runtime can replace its D1 stub during HMR while
+  // retaining the same env proxy. Caching Better Auth here leaves it holding
+  // a poisoned D1 stub, which breaks session checks and sign-in.
+  return createAuthInstance(env)
 }

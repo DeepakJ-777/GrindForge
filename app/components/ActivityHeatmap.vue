@@ -1,7 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const props = defineProps<{ days: Array<{ date: string, count: number }> }>()
+
+const props = defineProps<{
+  days: Array<{
+    date: string
+    count: number
+    logs?: number
+    leetcode?: number
+    github?: number
+  }>
+}>()
+
 
 interface Cell {
   date: string
@@ -79,16 +89,25 @@ const monthLabels = computed<string[]>(() => {
   return labels
 })
 
+
 function titleFor(cell: Cell): string {
   if (cell.inFuture) return cell.date
-  return cell.count === 0
-    ? `No activity · ${cell.date}`
-    : `${cell.count} ${cell.count === 1 ? 'log' : 'logs'} · ${cell.date}`
+
+  const day = props.days.find(item => item.date === cell.date)
+
+  if (!day || cell.count === 0) {
+    return `No recorded activity · ${cell.date}`
+  }
+
+  return [
+    cell.date,
+    `Prep logs: ${day.logs ?? 0}`,
+    `LeetCode submissions: ${day.leetcode ?? 0}`,
+    `GitHub contributions: ${day.github ?? 0}`,
+  ].join(' · ')
 }
 
-const totalThisYear = computed(() =>
-  weeks.value.flat().reduce((sum, c) => (c.inFuture ? sum : sum + c.count), 0),
-)
+
 </script>
 
 <template>
@@ -100,8 +119,7 @@ const totalThisYear = computed(() =>
         </span>
         <div>
           <h2 class="text-[15px] font-semibold text-ink">Activity heatmap</h2>
-          <p class="text-[12.5px] text-sub">{{ totalThisYear }} logs in the last year</p>
-        </div>
+<p class="text-[12.5px] text-sub">Prep logs, LeetCode & GitHub activity · last year</p>        </div>
       </div>
     </div>
 

@@ -1,0 +1,21 @@
+name: Scheduled in-app notifications
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  notifications:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate due reminders and weekly summaries
+        env:
+          SITE_URL: https://placement.waterman777.workers.dev
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          test -n "$SITE_URL"
+          test -n "$CRON_SECRET"
+          curl --fail-with-body --silent --show-error \
+            -X POST "$SITE_URL/api/cron/notifications" \
+            -H "Authorization: Bearer $CRON_SECRET"

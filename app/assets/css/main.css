@@ -1,0 +1,91 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme {
+  /* Typography */
+  --font-sans: "Manrope", "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand — deep indigo scale (primary #3038B8 / #3F46C7) */
+  --color-primary-50: #EEF0FB;
+  --color-primary-100: #E0E3F7;
+  --color-primary-200: #C3C9F0;
+  --color-primary-300: #9BA3E5;
+  --color-primary-400: #6F77D8;
+  --color-primary-500: #4A51C9;
+  --color-primary-600: #3038B8;
+  --color-primary-700: #2A30A0;
+  --color-primary-800: #232782;
+  --color-primary-900: #1F2268;
+  --color-primary-950: #16184C;
+
+  /* Brand — soft azure (#4D8DFF) */
+  --color-secondary-50: #EFF6FF;
+  --color-secondary-100: #DBEAFF;
+  --color-secondary-200: #BEDAFF;
+  --color-secondary-300: #91C3FF;
+  --color-secondary-400: #6BA6FF;
+  --color-secondary-500: #4D8DFF;
+  --color-secondary-600: #3373E8;
+  --color-secondary-700: #255BC4;
+  --color-secondary-800: #234CA0;
+  --color-secondary-900: #22437F;
+  --color-secondary-950: #1B2C51;
+
+  /* Design-system neutrals (custom names to avoid Nuxt UI token collisions) */
+  --color-canvas: #F5F6FC;      /* page background */
+  --color-surface: #FFFFFF;     /* card surfaces */
+  --color-ink: #1E2339;         /* dark navy text */
+  --color-sub: #6A7194;         /* muted blue-gray text */
+  --color-line: #E6E8F4;        /* very light borders */
+  --color-lav: #EEF1FC;         /* soft lavender fill */
+  --color-royal: #3038B8;       /* accent indigo */
+  --color-azure: #4D8DFF;       /* accent blue */
+
+  /* Heatmap intensity scale */
+  --color-heat-0: #EBEDF6;
+  --color-heat-1: #D6DCFA;
+  --color-heat-2: #A8B2F2;
+  --color-heat-3: #6F7DE3;
+  --color-heat-4: #3038B8;
+
+  /* Radii */
+  --radius-card: 16px;
+
+  /* Subtle card shadow */
+  --shadow-card: 0 4px 20px rgba(50, 60, 120, 0.04);
+  --shadow-pop: 0 8px 30px rgba(50, 60, 120, 0.08);
+}
+
+@layer base {
+  .dark {
+    --color-canvas: #111421;
+    --color-surface: #191e31;
+    --color-ink: #edf0ff;
+    --color-sub: #a3aac8;
+    --color-line: #2d3450;
+    --color-lav: #252c46;
+    --color-heat-0: #252c46;
+  }
+
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background-color: var(--color-primary-100);
+  }
+}
+
+@layer components {
+  .gf-card {
+    @apply bg-surface border border-line;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+}
