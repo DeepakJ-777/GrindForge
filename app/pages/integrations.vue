@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 
-useHead({ title: 'Integrations | GRIND' })
+useHead({ title: 'Integrations | GRINDFORGE' })
 
 interface LeetCodeStats {
   username: string
@@ -184,8 +184,8 @@ onMounted(loadIntegrations)
       </p>
 
       <template v-else>
-        <form class="mt-6 flex flex-col gap-3 sm:flex-row" @submit.prevent="saveUsername">
-          <div class="flex-1">
+        <form class="mt-6 flex flex-col gap-3" @submit.prevent="saveUsername">
+          <div>
             <label for="leetcode-username" class="mb-2 block text-sm font-medium text-ink">
               LeetCode username
             </label>
@@ -200,22 +200,26 @@ onMounted(loadIntegrations)
               :disabled="saving || syncing"
             />
           </div>
-          <div class="flex items-end">
-            <UButton type="submit" :loading="saving" :disabled="saving || syncing || !username.trim()">
+
+          <div class="flex items-center gap-3">
+            <UButton
+              type="submit"
+              :loading="saving"
+              :disabled="saving || syncing || !username.trim()"
+            >
               Save username
+            </UButton>
+
+            <UButton
+              type="button"
+              :loading="syncing"
+              :disabled="syncing || saving || !username.trim()"
+              @click="syncLeetCode"
+            >
+              Sync LeetCode
             </UButton>
           </div>
         </form>
-
-        <div class="mt-4">
-          <UButton
-            :loading="syncing"
-            :disabled="syncing || saving || !username.trim()"
-            @click="syncLeetCode"
-          >
-            Sync LeetCode
-          </UButton>
-        </div>
       </template>
 
       <div v-if="stats" class="mt-7 border-t border-line pt-6">
@@ -281,7 +285,7 @@ onMounted(loadIntegrations)
     </section>
         <section class="gf-card p-6 sm:p-7">
       <div class="flex items-start gap-4">
-        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 text-xl font-bold text-gray-900">
+        <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-lav text-xl font-bold text-ink">
           GH
         </div>
 
@@ -348,7 +352,7 @@ onMounted(loadIntegrations)
     <section class="gf-card p-5">
       <h3 class="text-sm font-semibold text-ink">About this integration</h3>
       <p class="mt-1 text-sm leading-relaxed text-sub">
-        GRIND fetches publicly available LeetCode profile statistics. Availability
+        GRINDFORGE fetches publicly available LeetCode profile statistics. Availability
         depends on LeetCode's public GraphQL service. Your saved snapshot remains
         available until you change the username or sync again.
       </p>

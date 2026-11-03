@@ -1,6 +1,6 @@
 <script setup lang="ts">
 useHead({
-  titleTemplate: title => (title ? `${title} · GRIND` : 'GRIND'),
+  titleTemplate: title => (title ? `${title} · GRINDFORGE` : 'GRINDFORGE'),
 })
 </script>
 

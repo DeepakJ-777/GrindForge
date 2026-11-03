@@ -90,72 +90,85 @@ useHead({ title: 'Dashboard' })
         <h2 class="text-[24px] leading-tight font-semibold text-ink sm:text-[26px]">
           Welcome back, {{ firstName }}
         </h2>
-        <p class="mt-1.5 max-w-xl text-[13.5px] leading-relaxed text-sub">
-          Keep building your skills. Your next opportunity is built through consistent preparation.
-        </p>
+        <p class="mt-1.5 max-w-xl truncate text-[13.5px] text-sub">Consistency beats intensity — keep showing up.</p>
       </div>
-      <UButton
-        to="/activity"
-        color="neutral"
-        variant="soft"
-        trailing-icon="i-lucide-arrow-right"
-      >
-        View all activity
-      </UButton>
+      <div class="flex flex-wrap gap-2">
+        <UButton to="/integrations" icon="i-lucide-plug-zap" trailing-icon="i-lucide-arrow-right">
+          Connect accounts
+        </UButton>
+        <UButton
+          to="/activity"
+          trailing-icon="i-lucide-arrow-right"
+        >
+          View all activity
+        </UButton>
+      </div>
     </section>
 
-    <!-- Stats -->
-    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-      <StatCard
-        label="Current streak"
-        :value="stats?.currentStreak ?? 0"
-        icon="i-lucide-flame"
-        :hint="stats?.currentStreak ? 'days in a row' : 'log today to start'"
-      />
-      <StatCard
-        label="Longest streak"
-        :value="stats?.longestStreak ?? 0"
-        icon="i-lucide-trophy"
-        :hint="stats?.longestStreak ? 'personal best' : 'not set yet'"
-      />
+    <!-- Quick log + rail (primary daily action, above the fold) -->
+    <section class="grid grid-cols-1 gap-4 xl:grid-cols-3">
+      <div class="xl:col-span-2">
+        <QuickLog @saved="refreshAll" />
+      </div>
+      <InfoRail :logs="logsData.logs" :timezone="settings.timezone" />
+    </section>
+
+    <!-- Streak hero (current + best, one idea) -->
+    <section class="gf-card flex flex-wrap items-center justify-between gap-4 p-6">
+      <div class="flex items-center gap-4">
+        <span class="flex size-12 shrink-0 items-center justify-center rounded-[14px] bg-lav">
+          <UIcon name="i-lucide-flame" class="size-6 text-primary-600" />
+        </span>
+        <div>
+          <p class="text-[11px] font-semibold tracking-[0.08em] text-sub uppercase">Current streak</p>
+          <p class="mt-0.5 text-[26px] leading-tight font-semibold text-ink">
+            {{ stats?.currentStreak ?? 0 }}
+            <span class="text-[15px] font-medium text-sub">{{ (stats?.currentStreak ?? 0) === 1 ? 'day' : 'days' }}</span>
+          </p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 text-sub">
+        <UIcon name="i-lucide-trophy" class="size-4" />
+        <span class="text-[13px]">Best <span class="font-semibold text-ink">{{ stats?.longestStreak ?? 0 }}</span></span>
+      </div>
+    </section>
+
+    <!-- 2-col grid: Prep days | LeetCode -->
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <StatCard
         label="Prep days"
         :value="stats?.totalDays ?? 0"
         icon="i-lucide-calendar-check"
         hint="total days logged"
       />
-      <NuxtLink to="/resume" class="block"><StatCard
-        label="Resume"
-        :value="resumeData?.resume?.filename ?? 'Not uploaded'"
-        icon="i-lucide-file-text"
-        :hint="resumeData?.resume ? `Updated ${new Date(resumeData.resume.updatedAt).toLocaleDateString()}` : 'Upload your resume'"
-      /></NuxtLink>
-
-<StatCard
-  label="LeetCode solved"
-  :value="integrationsData?.leetcode.stats?.solved.all ?? 0"
-  icon="i-lucide-code-2"
-  :hint="integrationsData?.leetcode.username
-    ? `@${integrationsData.leetcode.username}`
-    : 'Connect your profile'"
-/>
-<StatCard
-  label="GitHub contributions"
-  :value="integrationsData?.github.stats?.totalContributions ?? 0"
-  icon="i-lucide-git-commit-horizontal"
-  :hint="integrationsData?.github.connected
-    ? `@${integrationsData.github.username}`
-    : 'Connect your account'"
-/>
-
+      <StatCard
+        label="LeetCode solved"
+        :value="integrationsData?.leetcode.stats?.solved.all ?? 0"
+        icon="i-lucide-code-2"
+        :hint="integrationsData?.leetcode.username
+          ? `@${integrationsData.leetcode.username}`
+          : 'Connect your profile'"
+      />
     </section>
 
-    <!-- Quick log + rail -->
-    <section class="grid grid-cols-1 gap-4 xl:grid-cols-3">
-      <div class="xl:col-span-2">
-        <QuickLog @saved="refreshAll" />
-      </div>
-      <InfoRail :logs="logsData.logs" :timezone="settings.timezone" />
+    <!-- 2-col grid: GitHub | Resume -->
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <StatCard
+        label="GitHub contributions"
+        :value="integrationsData?.github.stats?.totalContributions ?? 0"
+        icon="i-lucide-git-commit-horizontal"
+        :hint="integrationsData?.github.connected
+          ? `@${integrationsData.github.username}`
+          : 'Connect your account'"
+      />
+      <NuxtLink to="/resume" class="block">
+        <StatCard
+          label="Resume"
+          :value="resumeData?.resume?.filename ?? 'Not uploaded'"
+          icon="i-lucide-file-text"
+          :hint="resumeData?.resume ? `Updated ${new Date(resumeData.resume.updatedAt).toLocaleDateString()}` : 'Upload your resume'"
+        />
+      </NuxtLink>
     </section>
 
     <!-- Heatmap -->

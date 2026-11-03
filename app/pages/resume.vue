@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 
-useHead({ title: 'Resume | GRIND' })
+useHead({ title: 'Resume | GRINDFORGE' })
 
 interface ResumeProfile {
   summary: string
@@ -42,7 +42,6 @@ interface SavedResume {
   pageCount: number
   parsedText: string
   profile: ResumeProfile | null
-  fileUrl?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -201,13 +200,14 @@ async function saveResume() {
   message.value = ''
 
   try {
-    const form = new FormData()
-    form.set('file', selectedFile.value)
-    form.set('pageCount', String(pageCount.value))
-    form.set('parsedText', extractedText.value.trim())
     const result = await $fetch<{ resume: SavedResume }>('/api/resume', {
       method: 'PUT',
-      body: form,
+      body: {
+        filename: selectedFile.value.name,
+        fileSize: selectedFile.value.size,
+        pageCount: pageCount.value,
+        parsedText: extractedText.value.trim(),
+      },
     })
 
     savedResume.value = result.resume
@@ -277,7 +277,7 @@ async function deleteResume() {
   try {
     await $fetch('/api/resume', { method: 'DELETE' })
     savedResume.value = null
-    profile.value = null  
+    profile.value = null
     confirmDelete.value = false
     extractedText.value = ''
     selectedFile.value = null
@@ -321,7 +321,7 @@ onMounted(loadResume)
           id="resume-pdf"
           type="file"
           accept=".pdf,application/pdf"
-          class="mt-4 block w-full text-sm text-ink file:mr-4 file:rounded-lg file:border-0 file:bg-primary-100 file:px-4 file:py-2 file:font-medium file:text-primary-700"
+          class="mt-4 block w-full text-sm text-ink file:mr-4 file:rounded-lg file:border-0 file:bg-primary-100 file:px-4 file:py-2 file:font-medium file:text-primary-400"
           :disabled="parsing || saving"
           @change="chooseFile"
         />
@@ -339,17 +339,6 @@ onMounted(loadResume)
               Updated {{ formatDate(savedResume.updatedAt) }}
             </p>
           </div>
-          <UButton
-            v-if="savedResume.fileUrl"
-            :to="savedResume.fileUrl"
-            external
-            target="_blank"
-            icon="i-lucide-download"
-            color="neutral"
-            variant="soft"
-          >
-            Download PDF
-          </UButton>
           <UButton
             v-if="!confirmDelete"
             color="error"
@@ -370,7 +359,7 @@ onMounted(loadResume)
             </UButton>
           </div>
         </div>
-        
+
 <div class="mt-4">
   <UButton
     :loading="analysing"
@@ -413,7 +402,7 @@ onMounted(loadResume)
       <p v-if="error" role="alert" class="mt-4 text-sm text-red-600">
         {{ error }}
       </p>
-      
+
 <section v-if="profile" class="mt-5 rounded-xl border border-line p-5">
   <h3 class="text-lg font-semibold text-ink">Your AI Resume Profile</h3>
 
@@ -514,7 +503,7 @@ onMounted(loadResume)
     <section class="gf-card p-5">
       <h3 class="text-sm font-semibold text-ink">Privacy and storage</h3>
       <p class="mt-1 text-sm leading-relaxed text-sub">
-        Your original PDF is stored privately in the configured R2 bucket. Extracted text and file details stay in your account for analysis and interview practice.
+        Your original PDF never leaves your browser — only the extracted text and file details are stored in your account for analysis and interview practice.
       </p>
     </section>
   </div>

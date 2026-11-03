@@ -19,12 +19,6 @@
 			"migrations_dir": "./db/migrations"
 		}
 	],
-	"r2_buckets": [
-		{
-			"binding": "RESUME_BUCKET",
-			"bucket_name": "grindforge-resumes"
-		}
-	],
 	"triggers": {
 		"crons": ["*/15 * * * *"]
 	}

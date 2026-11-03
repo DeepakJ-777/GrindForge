@@ -48,8 +48,7 @@ useHead({ title: 'Profile' })
 
       <UButton
         to="/settings"
-        color="neutral"
-        variant="soft"
+
         class="mt-6"
         trailing-icon="i-lucide-arrow-right"
       >

@@ -9,9 +9,5 @@ export default defineNuxtPlugin(async () => {
       // Unauthenticated pages keep the defaults.
     }
   }
-  useHead({
-    htmlAttrs: {
-      class: computed(() => settings.value.theme === 'dark' ? 'dark' : ''),
-    },
-  })
+
 })

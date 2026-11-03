@@ -82,38 +82,18 @@ useHead({ title: 'Settings' })
       </div>
     </section>
 
-    <section class="gf-card p-6">
-      <h2 class="text-[16px] font-semibold text-ink">Preferences</h2>
-      <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        <label class="text-[13px] font-medium text-ink">Theme
-          <select v-model="settings.theme" class="mt-1 block w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink">
-            <option value="light">Light</option><option value="dark">Dark</option>
-          </select>
-        </label>
-        <label class="text-[13px] font-medium text-ink">Timezone (IANA)
-          <input v-model="timezone" placeholder="Asia/Kolkata" class="mt-1 block w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink">
-        </label>
-        <label class="text-[13px] font-medium text-ink">Daily reminder hour (local time)
-          <input v-model.number="reminderHour" type="number" min="0" max="23" class="mt-1 block w-full rounded-lg border border-line bg-surface px-3 py-2 text-ink">
-        </label>
-        <div class="flex items-center justify-between gap-4"><div><p class="text-[13.5px] font-medium text-ink">Daily log reminder</p><p class="text-[12px] text-sub">In-app nudge if you haven't logged by evening</p></div><USwitch v-model="settings.notifyDaily" /></div>
-        <div class="flex items-center justify-between gap-4"><div><p class="text-[13.5px] font-medium text-ink">Weekly summary</p><p class="text-[12px] text-sub">Sunday recap of your prep week</p></div><USwitch v-model="settings.notifyWeekly" /></div>
-      </div>
-      <UButton class="mt-5" :loading="busy" :disabled="busy" @click="saveSettings">Save preferences</UButton>
-      <p v-if="message" role="status" class="mt-3 text-sm text-green-700">{{ message }}</p>
-      <p v-if="error" role="alert" class="mt-3 text-sm text-red-600">{{ error }}</p>
-    </section>
 
-    <section class="gf-card p-6">
-      <h2 class="text-[16px] font-semibold text-ink">Data</h2>
-      <p class="mt-1 text-[13px] text-sub">Download your profile, logs, settings, interview history and notifications.</p>
-      <UButton icon="i-lucide-download" color="neutral" variant="soft" class="mt-4" @click="exportData">Export my data</UButton>
-    </section>
 
     <section class="gf-card p-6">
       <h2 class="text-[16px] font-semibold text-ink">Authentication</h2>
       <p class="mt-1 text-[13px] text-sub">You're signed in with Google. Signing out keeps your data linked to your account.</p>
-      <UButton icon="i-lucide-log-out" color="error" variant="soft" class="mt-4" @click="logout">Sign out</UButton>
+      <UButton
+        icon="i-lucide-log-out"
+        class="mt-4 !bg-red-600 !text-white hover:!bg-red-700 !border-red-600"
+        @click="logout"
+      >
+        Sign out
+      </UButton>
     </section>
   </div>
 </template>

@@ -12,6 +12,7 @@ const mainNav = [
 ]
 
 const secondaryNav = [
+  { label: 'Integrations', to: '/integrations', icon: 'i-lucide-plug-zap' },
   { label: 'Settings', to: '/settings', icon: 'i-lucide-settings' },
   { label: 'Profile', to: '/profile', icon: 'i-lucide-user-round' },
 ]
@@ -35,7 +36,7 @@ function isActive(to: string) {
       <span class="flex size-9 items-center justify-center rounded-[10px] bg-primary-600 shadow-sm">
         <UIcon name="i-lucide-flame" class="size-5 text-white" />
       </span>
-      <span class="text-[15px] font-bold tracking-[0.18em] text-ink">GRIND</span>
+      <span class="text-[15px] font-bold tracking-[0.18em] text-ink">GRINDFORGE</span>
     </NuxtLink>
 
     <!-- Primary nav -->
@@ -46,7 +47,7 @@ function isActive(to: string) {
         :to="item.to"
         class="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13.5px] font-medium transition-colors"
         :class="isActive(item.to)
-          ? 'bg-lav text-primary-700'
+          ? 'bg-lav text-primary-400'
           : 'text-sub hover:bg-lav/60 hover:text-ink'"
       >
         <UIcon
@@ -68,7 +69,7 @@ function isActive(to: string) {
         :to="item.to"
         class="flex items-center gap-3 rounded-[10px] px-3 py-2.5 text-[13.5px] font-medium transition-colors"
         :class="isActive(item.to)
-          ? 'bg-lav text-primary-700'
+          ? 'bg-lav text-primary-400'
           : 'text-sub hover:bg-lav/60 hover:text-ink'"
       >
         <UIcon

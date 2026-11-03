@@ -86,7 +86,6 @@ Voice sessions connect from the browser to Gemini over a secure WebSocket using 
 Before deploying, create the bucket and apply migrations:
 
 ```bash
-npx wrangler r2 bucket create grindforge-resumes
 npm run db:migrate:remote
 npx wrangler secret put GROQ_API_KEY
 npx wrangler secret put GEMINI_API_KEY

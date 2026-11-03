@@ -11,6 +11,7 @@ const titles: Array<[string, string]> = [
   ['/activity', 'Activity'],
   ['/resume', 'Resume'],
   ['/interview', 'AI Interview'],
+  ['/integrations', 'Integrations'],
   ['/settings', 'Settings'],
   ['/profile', 'Profile'],
 ]
@@ -46,11 +47,10 @@ async function markAllRead() {
 <template>
   <header class="sticky top-0 z-30 border-b border-line/70 bg-canvas/85 backdrop-blur">
     <div class="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
-      <!-- Mobile menu -->
+      <!-- Mobile menu (sidebar is permanent on lg+) -->
       <UButton
         icon="i-lucide-menu"
         color="neutral"
-        variant="ghost"
         class="lg:hidden"
         aria-label="Open menu"
         @click="sidebarOpen = true"
@@ -72,24 +72,7 @@ async function markAllRead() {
           @update:model-value="$router.replace({ query: { ...$route.query, q: $event || undefined } })"
         />
 
-        <UPopover v-model:open="notificationsOpen">
-          <UButton icon="i-lucide-bell" color="neutral" variant="ghost" aria-label="Notifications">
-            <span v-if="unreadCount" class="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-primary-600 text-[9px] text-white">{{ Math.min(unreadCount, 9) }}</span>
-          </UButton>
-          <template #content>
-            <div class="w-[min(360px,calc(100vw-2rem))] p-3">
-              <div class="flex items-center justify-between px-1 pb-2">
-                <h2 class="text-sm font-semibold text-ink">Notifications</h2>
-                <UButton v-if="unreadCount" size="xs" color="neutral" variant="ghost" @click="markAllRead">Mark all read</UButton>
-              </div>
-              <p v-if="!noticeData.notifications.length" class="px-1 py-5 text-center text-xs text-sub">You're all caught up.</p>
-              <button v-for="notice in noticeData.notifications" :key="notice.id" type="button" class="block w-full rounded-lg px-2 py-2 text-left hover:bg-lav" @click="!notice.readAt && markRead(notice.id)">
-                <span class="flex items-center gap-2 text-sm font-medium text-ink"><span v-if="!notice.readAt" class="size-2 rounded-full bg-primary-600" />{{ notice.title }}</span>
-                <span class="mt-1 block text-xs leading-relaxed text-sub">{{ notice.body }}</span>
-              </button>
-            </div>
-          </template>
-        </UPopover>
+
 
         <NuxtLink to="/profile" class="ml-1 shrink-0 rounded-full transition hover:opacity-85">
           <UAvatar

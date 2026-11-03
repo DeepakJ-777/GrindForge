@@ -74,7 +74,7 @@ async function save() {
           type="button"
           class="rounded-full border px-3 py-1 text-[12px] font-medium transition-colors"
           :class="selectedTags.includes(tag)
-            ? 'border-primary-200 bg-primary-50 text-primary-700'
+            ? 'border-primary-200 bg-primary-50 text-primary-400'
             : 'border-line bg-surface text-sub hover:border-primary-200 hover:text-ink'"
           @click="toggleTag(tag)"
         >
@@ -85,7 +85,7 @@ async function save() {
       <div class="flex items-center gap-3">
         <UButton
           :loading="saving"
-          :disabled="!note.trim()"
+
           icon="i-lucide-check"
           size="md"
           @click="save"

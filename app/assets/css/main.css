@@ -57,16 +57,6 @@
 }
 
 @layer base {
-  .dark {
-    --color-canvas: #111421;
-    --color-surface: #191e31;
-    --color-ink: #edf0ff;
-    --color-sub: #a3aac8;
-    --color-line: #2d3450;
-    --color-lav: #252c46;
-    --color-heat-0: #252c46;
-  }
-
   html {
     font-family: var(--font-sans);
   }
@@ -88,4 +78,6 @@
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-card);
   }
+
+
 }

@@ -14,7 +14,6 @@ declare global {
       GROQ_API_KEY: string
       GEMINI_API_KEY: string
       CRON_SECRET: string
-      RESUME_BUCKET: R2Bucket
     }
   }
 }

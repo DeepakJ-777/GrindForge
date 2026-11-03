@@ -143,7 +143,7 @@ useHead({ title: 'Activity' })
           type="button"
           class="rounded-full border px-3 py-1 text-[12px] font-medium transition-colors"
           :class="activeTag === tag
-            ? 'border-primary-200 bg-primary-50 text-primary-700'
+            ? 'border-primary-200 bg-primary-50 text-primary-400'
             : 'border-line text-sub hover:border-primary-200 hover:text-ink'"
           @click="activeTag = activeTag === tag ? null : tag"
         >
@@ -181,7 +181,7 @@ useHead({ title: 'Activity' })
               <span
                 v-for="tag in log.tags"
                 :key="tag"
-                class="rounded-full bg-lav px-2 py-0.5 text-[11px] font-medium text-primary-700"
+                class="rounded-full bg-lav px-2 py-0.5 text-[11px] font-medium text-primary-400"
               >
                 {{ tag }}
               </span>

@@ -90,7 +90,7 @@ async function remove(id: string) {
             <span
               v-for="tag in log.tags"
               :key="tag"
-              class="rounded-full bg-lav px-2 py-0.5 text-[11px] font-medium text-primary-700"
+              class="rounded-full bg-lav px-2 py-0.5 text-[11px] font-medium text-primary-400"
             >
               {{ tag }}
             </span>

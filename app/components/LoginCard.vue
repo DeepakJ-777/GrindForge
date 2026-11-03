@@ -14,7 +14,7 @@ async function signIn() {
       <div class="mx-auto flex size-12 items-center justify-center rounded-[14px] bg-primary-600 shadow-sm">
         <UIcon name="i-lucide-flame" class="size-6 text-white" />
       </div>
-      <p class="mt-4 text-[15px] font-bold tracking-[0.18em] text-ink">GRIND</p>
+      <p class="mt-4 text-[15px] font-bold tracking-[0.18em] text-ink">GRINDFORGE</p>
 
       <h1 class="mt-6 text-[22px] font-semibold text-ink">Welcome back</h1>
       <p class="mt-1.5 text-[13.5px] leading-relaxed text-sub">

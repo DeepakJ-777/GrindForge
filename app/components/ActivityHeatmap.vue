@@ -119,7 +119,7 @@ function titleFor(cell: Cell): string {
         </span>
         <div>
           <h2 class="text-[15px] font-semibold text-ink">Activity heatmap</h2>
-<p class="text-[12.5px] text-sub">Prep logs, LeetCode & GitHub activity · last year</p>        </div>
+<p class="text-[12.5px] text-sub"></p>        </div>
       </div>
     </div>
 

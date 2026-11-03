@@ -140,7 +140,7 @@ useHead({ title: 'AI Interview' })
         <div>
           <p class="text-[13px] font-semibold text-sub">Interview type</p>
           <div class="mt-2 grid grid-cols-2 gap-2">
-            <button v-for="type in TYPES" :key="type.id" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs" :class="config.type === type.id ? 'border-primary-300 bg-primary-50 text-primary-700' : 'border-line text-sub'" @click="config.type = type.id">
+            <button v-for="type in TYPES" :key="type.id" type="button" class="flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-xs" :class="config.type === type.id ? 'border-primary-300 bg-primary-50 text-primary-400' : 'border-line text-sub'" @click="config.type = type.id">
               <UIcon :name="type.icon" class="size-4" />{{ type.label }}
             </button>
           </div>
@@ -148,7 +148,7 @@ useHead({ title: 'AI Interview' })
         <div>
           <p class="text-[13px] font-semibold text-sub">Duration</p>
           <div class="mt-2 flex gap-2">
-            <button v-for="duration in durations" :key="duration" type="button" class="flex-1 rounded-lg border px-3 py-2 text-xs" :class="config.duration === duration ? 'border-primary-300 bg-primary-50 text-primary-700' : 'border-line text-sub'" @click="config.duration = duration">{{ duration }} min</button>
+            <button v-for="duration in durations" :key="duration" type="button" class="flex-1 rounded-lg border px-3 py-2 text-xs" :class="config.duration === duration ? 'border-primary-300 bg-primary-50 text-primary-400' : 'border-line text-sub'" @click="config.duration = duration">{{ duration }} min</button>
           </div>
         </div>
         <label class="text-[13px] font-semibold text-sub">Optional job description
