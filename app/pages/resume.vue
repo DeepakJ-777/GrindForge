@@ -305,7 +305,7 @@ onMounted(loadResume)
             Keep your experience ready for future AI interview practice.
           </p>
         </div>
-        <UBadge color="neutral" variant="soft">
+        <UBadge color="neutral" >
           {{ savedResume ? 'Resume saved' : 'No resume saved' }}
         </UBadge>
       </div>
@@ -342,7 +342,7 @@ onMounted(loadResume)
           <UButton
             v-if="!confirmDelete"
             color="error"
-            variant="soft"
+
             :loading="deleting"
             :disabled="deleting"
             @click="deleteResume"
@@ -354,7 +354,7 @@ onMounted(loadResume)
             <UButton color="error" :loading="deleting" :disabled="deleting" @click="deleteResume">
               Confirm delete
             </UButton>
-            <UButton color="neutral" variant="soft" :disabled="deleting" @click="confirmDelete = false">
+            <UButton color="neutral"  :disabled="deleting" @click="confirmDelete = false">
               Cancel
             </UButton>
           </div>
@@ -418,7 +418,7 @@ onMounted(loadResume)
         v-for="(skill, index) in profile.skills"
         :key="`${skill}-${index}`"
         color="neutral"
-        variant="soft"
+
       >
         {{ skill }}
       </UBadge>
@@ -453,7 +453,7 @@ onMounted(loadResume)
           v-for="(technology, techIndex) in item.technologies"
           :key="`${technology}-${techIndex}`"
           color="neutral"
-          variant="soft"
+
         >
           {{ technology }}
         </UBadge>

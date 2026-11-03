@@ -318,14 +318,17 @@ app.post('/interviews', requireAuth, rateLimit(5, 60 * 60 * 1000), async (c) => 
     const id = crypto.randomUUID()
     const now = new Date()
     await db.insert(interviewSessions).values({ id, userId: c.var.user.id, type, duration: Number(duration), jobDescription, questions: JSON.stringify(questions), transcript: '[]', startedAt: now })
-    return c.json({ session: { id, type, duration: Number(duration), status: 'in_progress', question: questions[0], questionNumber: 1, totalQuestions: questions.length } }, 201)
+    const firstName = c.var.user.name?.trim().split(/\s+/)[0] ?? ''
+    const typeLabels: Record<string, string> = { technical: 'technical', hr: 'HR', project: 'project deep-dive', full: 'full-length' }
+    const greeting = `Hello${firstName ? ` ${firstName}` : ''}, and welcome — thanks for making time today. I'll be conducting your ${typeLabels[type] ?? type} interview. We'll go through about ${questions.length} questions; take them at your own pace and answer in your own words. Let's begin.`
+    return c.json({ session: { id, type, duration: Number(duration), status: 'in_progress', greeting, question: questions[0], questionNumber: 1, totalQuestions: questions.length } }, 201)
   } catch (error) {
     console.error('Interview start failed:', error)
     return c.json({ error: 'Could not generate the interview. Check the AI provider configuration and try again.' }, 502)
   }
 })
 
-app.post('/interviews/live', requireAuth, rateLimit(3, 60 * 60 * 1000), async (c) => {
+app.post('/interviews/live', requireAuth, rateLimit(10, 60 * 60 * 1000), async (c) => {
   const apiKey = c.env.GEMINI_API_KEY
   if (!apiKey) return c.json({ error: 'Voice interviews are not configured. Add GEMINI_API_KEY to the local secrets and Worker.' }, 503)
 
@@ -475,6 +478,38 @@ app.post('/interviews/:id/answer', requireAuth, rateLimit(20, 60 * 1000), async 
     console.error('Interview answer evaluation failed:', error)
     return c.json({ error: 'Could not evaluate the answer. Please try again.' }, 502)
   }
+})
+
+// End a text interview early and report on the answers given so far.
+app.post('/interviews/:id/end', requireAuth, rateLimit(10, 60 * 60 * 1000), async (c) => {
+  const db = getDb(c.env)
+  const id = c.req.param('id') ?? ''
+  const [session] = await db.select().from(interviewSessions)
+    .where(and(eq(interviewSessions.id, id), eq(interviewSessions.userId, c.var.user.id))).limit(1)
+  if (!session) return c.json({ error: 'Interview not found.' }, 404)
+  if (session.type.startsWith('voice_')) return c.json({ error: 'This is a voice interview.' }, 400)
+  if (session.status === 'completed') return c.json({ ok: true, report: session.report ? JSON.parse(session.report) : null })
+
+  const transcript = JSON.parse(session.transcript) as Array<{ score?: number }>
+  let report: { score: number; summary: string; strengths: string[]; improvements: string[] } | null = null
+
+  if (transcript.length) {
+    const answered = transcript.filter(turn => typeof turn.score === 'number')
+    report = {
+      score: Math.round(answered.reduce((sum, turn) => sum + (turn.score ?? 0), 0) / answered.length * 20),
+      summary: 'Interview ended early. The report reflects the answers given so far.',
+      strengths: [],
+      improvements: [],
+    }
+  }
+
+  await db.update(interviewSessions).set({
+    status: 'completed',
+    report: report ? JSON.stringify(report) : null,
+    completedAt: new Date(),
+  }).where(eq(interviewSessions.id, session.id))
+
+  return c.json({ ok: true, report })
 })
 
 /* ------------------------------- Daily logs -------------------------------- */
@@ -1398,6 +1433,14 @@ app.get('/integrations/github/connect', requireAuth, async (c) => {
   authorizeUrl.searchParams.set('scope', 'read:user')
   authorizeUrl.searchParams.set('state', state)
 
+  // "Use another account": sign the user out of GitHub first so the OAuth
+  // screen offers a fresh login instead of silently re-using the session.
+  if (c.req.query('switch') === '1') {
+    const logoutUrl = new URL('https://github.com/logout')
+    logoutUrl.searchParams.set('return_to', authorizeUrl.toString())
+    return c.redirect(logoutUrl.toString(), 302)
+  }
+
   return c.redirect(authorizeUrl.toString(), 302)
 })
 
@@ -1470,6 +1513,20 @@ app.get('/integrations/github/callback', requireAuth, async (c) => {
 
     const db = getDb(c.env)
     const now = new Date()
+
+    // If the user switched GitHub accounts, drop the old account's activity so
+    // the heatmap doesn't merge contributions from two different accounts.
+    const [existing] = await db
+      .select({ githubUsername: integrations.githubUsername })
+      .from(integrations)
+      .where(eq(integrations.userId, c.var.user.id))
+      .limit(1)
+
+    if (existing?.githubUsername && existing.githubUsername !== githubUser.login) {
+      await db
+        .delete(githubDailyActivity)
+        .where(eq(githubDailyActivity.userId, c.var.user.id))
+    }
 
     await db
       .insert(integrations)

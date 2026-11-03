@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, shallowRef } from 'vue'
 
 export interface VoiceTranscriptTurn {
   speaker: 'Interviewer' | 'Candidate'
@@ -29,6 +29,11 @@ export function useGeminiLive() {
   const error = ref('')
   const muted = ref(false)
   const report = ref<VoiceReport | null>(null)
+  // Side-branch analysers for the voice orb visualiser. They receive the same
+  // audio as the engine but are never connected onward, so playback and
+  // capture are untouched.
+  const micAnalyser = shallowRef<AnalyserNode | null>(null)
+  const outputAnalyser = shallowRef<AnalyserNode | null>(null)
 
   let session: LiveSessionHandle | null = null
   let mediaStream: MediaStream | null = null
@@ -73,6 +78,7 @@ export function useGeminiLive() {
     const source = audioContext.createBufferSource()
     source.buffer = buffer
     source.connect(audioContext.destination)
+    if (outputAnalyser.value) source.connect(outputAnalyser.value)
     const startAt = Math.max(audioContext.currentTime, nextPlaybackTime)
     source.start(startAt)
     nextPlaybackTime = startAt + buffer.duration
@@ -122,6 +128,8 @@ export function useGeminiLive() {
   function startMicrophone() {
     if (!mediaStream || !audioContext || !session) return
     audioSource = audioContext.createMediaStreamSource(mediaStream)
+    micAnalyser.value = audioContext.createAnalyser()
+    audioSource.connect(micAnalyser.value)
     processor = audioContext.createScriptProcessor(4096, 1, 1)
     silenceGain = audioContext.createGain()
     silenceGain.gain.value = 0
@@ -142,6 +150,10 @@ export function useGeminiLive() {
     processor?.disconnect()
     audioSource?.disconnect()
     silenceGain?.disconnect()
+    micAnalyser.value?.disconnect()
+    outputAnalyser.value?.disconnect()
+    micAnalyser.value = null
+    outputAnalyser.value = null
     mediaStream?.getTracks().forEach(track => track.stop())
     if (audioContext && audioContext.state !== 'closed') void audioContext.close()
     processor = null
@@ -165,6 +177,7 @@ export function useGeminiLive() {
       mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } })
       audioContext = new AudioContext()
       await audioContext.resume()
+      outputAnalyser.value = audioContext.createAnalyser()
 
       const provisioned = await $fetch<{ sessionId: string; token: string; model: string; systemInstruction: string }>('/api/interviews/live', {
         method: 'POST',
@@ -234,5 +247,5 @@ export function useGeminiLive() {
     error.value = ''
   }
 
-  return { status, transcript, interimText, error, muted, report, start, finish, toggleMute, resetReport }
+  return { status, transcript, interimText, error, muted, report, micAnalyser, outputAnalyser, start, finish, toggleMute, resetReport }
 }

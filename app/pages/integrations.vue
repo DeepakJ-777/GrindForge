@@ -323,21 +323,22 @@ onMounted(loadIntegrations)
   </p>
 </div>
 
-<UButton
-  class="mt-4"
-  :loading="githubSyncing"
-  :disabled="githubSyncing"
-  @click="syncGitHub"
->
-  Sync GitHub
-</UButton>
+<div class="mt-4 flex flex-wrap items-center gap-3">
+  <UButton
+    :loading="githubSyncing"
+    :disabled="githubSyncing"
+    @click="syncGitHub"
+  >
+    Sync GitHub
+  </UButton>
 
-        <a
-  href="/api/integrations/github/connect"
-  class="inline-flex items-center justify-center rounded-lg border border-line px-4 py-2.5 text-sm font-medium text-ink hover:bg-canvas"
->
-  Reconnect GitHub
-</a>
+  <a
+    href="/api/integrations/github/connect?switch=1"
+    class="inline-flex items-center justify-center rounded-lg border border-line px-4 py-2.5 text-sm font-medium text-ink hover:bg-canvas"
+  >
+    Use another account
+  </a>
+</div>
       </div>
 
       <div v-else class="mt-5">

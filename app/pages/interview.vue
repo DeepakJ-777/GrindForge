@@ -11,7 +11,7 @@ const durations = [15, 30, 45]
 const config = reactive({ type: 'technical', duration: 30, jobDescription: '' })
 const resume = ref<{ filename: string } | null>(null)
 const sessions = ref<any[]>([])
-const active = ref<{ id: string; question: string; questionNumber: number; totalQuestions: number } | null>(null)
+const active = ref<{ id: string; greeting?: string; question: string; questionNumber: number; totalQuestions: number } | null>(null)
 const answer = ref('')
 const feedback = ref('')
 const report = ref<{ score: number; summary: string; strengths: string[]; improvements: string[] } | null>(null)
@@ -25,6 +25,8 @@ const voiceInterimText = voice.interimText
 const voiceError = voice.error
 const voiceMuted = voice.muted
 const voiceReport = voice.report
+const voiceMicAnalyser = voice.micAnalyser
+const voiceOutputAnalyser = voice.outputAnalyser
 const voiceActive = computed(() => voiceStatus.value !== 'idle')
 
 function mergeTranscript(turns: Array<{ speaker: string; text: string }> = []) {
@@ -102,6 +104,22 @@ async function submitAnswer() {
   }
 }
 
+async function endInterview() {
+  if (!active.value || busy.value) return
+  busy.value = true
+  error.value = ''
+  try {
+    const result = await $fetch<{ report: typeof report.value }>(`/api/interviews/${active.value.id}/end`, { method: 'POST' })
+    active.value = null
+    report.value = result.report
+    await load()
+  } catch (cause: any) {
+    error.value = cause?.data?.error ?? 'Could not end the interview.'
+  } finally {
+    busy.value = false
+  }
+}
+
 async function startVoice() {
   error.value = ''
   await voice.start({ type: config.type, jobDescription: config.jobDescription })
@@ -158,7 +176,7 @@ useHead({ title: 'AI Interview' })
       <p class="mt-3 text-xs text-sub">Your resume and optional job description are sent to the AI provider you choose for the session. Voice calls use Gemini 3.8 Live and require microphone access.</p>
       <div class="mt-4 flex flex-wrap gap-2">
         <UButton icon="i-lucide-play" :loading="busy" :disabled="busy || !resume" @click="start">Start text interview</UButton>
-        <UButton icon="i-lucide-mic" color="neutral" variant="soft" :disabled="busy || !resume || voiceStatus !== 'idle'" @click="startVoice">Start voice interview</UButton>
+        <UButton icon="i-lucide-mic" :disabled="busy || !resume || voiceStatus !== 'idle'" @click="startVoice">Start voice interview</UButton>
       </div>
     </section>
 
@@ -172,6 +190,14 @@ useHead({ title: 'AI Interview' })
           {{ voiceStatus === 'connected' ? 'Connected' : voiceStatus === 'ending' ? 'Saving transcript' : 'Connecting…' }}
         </UBadge>
       </div>
+      <div class="mt-6 flex justify-center">
+        <InterviewVoiceOrb
+          :status="voiceStatus"
+          :muted="voiceMuted"
+          :mic-analyser="voiceMicAnalyser"
+          :output-analyser="voiceOutputAnalyser"
+        />
+      </div>
       <div class="mt-5 max-h-96 space-y-3 overflow-y-auto rounded-xl border border-line bg-canvas/60 p-4" aria-live="polite">
         <p v-if="!voiceTranscript.length && !voiceInterimText" class="text-sm text-sub">The interviewer will begin shortly. Speak naturally and pause when you finish an answer.</p>
         <article v-for="(turn, index) in voiceTranscript" :key="`${index}-${turn.speaker}`" class="text-sm">
@@ -182,7 +208,7 @@ useHead({ title: 'AI Interview' })
       </div>
       <p v-if="voiceError" role="alert" class="mt-3 text-sm text-red-600">{{ voiceError }}</p>
       <div class="mt-4 flex flex-wrap gap-2">
-        <UButton color="neutral" variant="soft" :disabled="voiceStatus !== 'connected'" :icon="voiceMuted ? 'i-lucide-mic-off' : 'i-lucide-mic'" @click="voice.toggleMute()">
+        <UButton :disabled="voiceStatus !== 'connected'" :icon="voiceMuted ? 'i-lucide-mic-off' : 'i-lucide-mic'" @click="voice.toggleMute()">
           {{ voiceMuted ? 'Unmute microphone' : 'Mute microphone' }}
         </UButton>
         <UButton color="error" icon="i-lucide-phone-off" :loading="voiceStatus === 'ending'" :disabled="voiceStatus === 'ending'" @click="finishVoice">End interview</UButton>
@@ -194,12 +220,16 @@ useHead({ title: 'AI Interview' })
         <p class="text-xs font-semibold tracking-wide text-sub uppercase">Question {{ active.questionNumber }} of {{ active.totalQuestions }}</p>
         <UProgress :model-value="Math.round((active.questionNumber - 1) / active.totalQuestions * 100)" class="w-36" />
       </div>
+      <p v-if="active.greeting" class="mt-4 rounded-lg bg-lav p-4 text-sm leading-relaxed text-ink"><strong>Interviewer:</strong> {{ active.greeting }}</p>
       <h3 class="mt-4 text-lg font-semibold leading-relaxed text-ink">{{ active.question }}</h3>
       <label class="mt-5 block text-sm font-medium text-ink">Your answer
         <textarea v-model="answer" maxlength="6000" rows="6" class="mt-2 block w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink" placeholder="Structure your answer clearly. You can include examples…" />
       </label>
       <p v-if="feedback" class="mt-4 rounded-lg bg-lav p-4 text-sm leading-relaxed text-ink"><strong>Feedback:</strong> {{ feedback }}</p>
-      <UButton class="mt-4" :loading="busy" :disabled="busy || !answer.trim()" icon="i-lucide-send" @click="submitAnswer">Submit answer</UButton>
+      <div class="mt-4 flex flex-wrap gap-2">
+        <UButton :loading="busy" :disabled="busy || !answer.trim()" icon="i-lucide-send" @click="submitAnswer">Submit answer</UButton>
+        <UButton color="error" icon="i-lucide-phone-off" :disabled="busy" @click="endInterview">End interview</UButton>
+      </div>
     </section>
 
     <section v-if="report" class="gf-card p-5 sm:p-6">
@@ -209,7 +239,7 @@ useHead({ title: 'AI Interview' })
         <div><h4 class="font-semibold text-ink">Strengths</h4><ul class="mt-2 list-disc pl-5 text-sm text-sub"><li v-for="item in report.strengths" :key="item">{{ item }}</li></ul></div>
         <div><h4 class="font-semibold text-ink">Areas to improve</h4><ul class="mt-2 list-disc pl-5 text-sm text-sub"><li v-for="item in report.improvements" :key="item">{{ item }}</li></ul></div>
       </div>
-      <UButton class="mt-5" color="neutral" variant="soft" @click="report = null">New interview</UButton>
+      <UButton class="mt-5" color="neutral" @click="report = null">New interview</UButton>
     </section>
 
     <section v-if="voiceReport" class="gf-card p-5 sm:p-6">
@@ -219,13 +249,13 @@ useHead({ title: 'AI Interview' })
         <div><h4 class="font-semibold text-ink">Strengths</h4><ul class="mt-2 list-disc pl-5 text-sm text-sub"><li v-for="item in voiceReport.strengths" :key="item">{{ item }}</li></ul></div>
         <div><h4 class="font-semibold text-ink">Areas to improve</h4><ul class="mt-2 list-disc pl-5 text-sm text-sub"><li v-for="item in voiceReport.improvements" :key="item">{{ item }}</li></ul></div>
       </div>
-      <UButton class="mt-5" color="neutral" variant="soft" @click="voice.resetReport()">New interview</UButton>
+      <UButton class="mt-5" color="neutral" @click="voice.resetReport()">New interview</UButton>
     </section>
 
     <section v-if="!voiceActive && voiceTranscript.length && !voiceReport" class="gf-card p-5 sm:p-6">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h3 class="text-lg font-semibold text-ink">Voice interview transcript</h3>
-        <UButton color="neutral" variant="soft" @click="voice.resetReport()">New interview</UButton>
+        <UButton color="neutral" @click="voice.resetReport()">New interview</UButton>
       </div>
       <article v-for="(turn, index) in voiceTranscript" :key="`last-${index}-${turn.speaker}`" class="mt-4 text-sm">
         <p class="font-semibold text-ink">{{ turn.speaker }}</p>
@@ -242,7 +272,7 @@ useHead({ title: 'AI Interview' })
         <article v-for="session in sessions" :key="session.id" class="px-5 py-3 text-sm">
           <div class="flex flex-wrap items-center gap-3">
             <span class="flex-1 text-ink">{{ formatDate(session.startedAt) }} · {{ session.type.replace('voice_', 'Voice · ') }} · {{ session.duration }} min</span>
-            <UBadge :color="session.status === 'completed' ? 'success' : 'neutral'" variant="soft">{{ session.status }}</UBadge>
+            <UBadge :color="session.status === 'completed' ? 'success' : 'neutral'">{{ session.status }}</UBadge>
             <span v-if="session.report" class="text-sub">Score {{ session.report.score }}/100</span>
           </div>
           <details v-if="session.transcript?.length" class="mt-2">
