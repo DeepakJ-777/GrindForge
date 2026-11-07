@@ -29,6 +29,17 @@ const voiceMicAnalyser = voice.micAnalyser
 const voiceOutputAnalyser = voice.outputAnalyser
 const voiceActive = computed(() => voiceStatus.value !== 'idle')
 
+// Loading overlay stage, driven only by the real interview operations below
+// (mirrors `busy`) and by the voice session's connecting/ending states.
+type LoadingStage = 'starting' | 'generating' | 'reviewing'
+const loadingStage = ref<LoadingStage | null>(null)
+const activeLoadingStage = computed<LoadingStage | null>(() => {
+  if (loadingStage.value) return loadingStage.value
+  if (voiceStatus.value === 'connecting') return 'starting'
+  if (voiceStatus.value === 'ending') return 'reviewing'
+  return null
+})
+
 function mergeTranscript(turns: Array<{ speaker: string; text: string }> = []) {
   return turns.reduce<Array<{ speaker: string; text: string }>>((merged, turn) => {
     const text = turn.text?.trim()
@@ -58,6 +69,7 @@ async function load() {
 
 async function start() {
   busy.value = true
+  loadingStage.value = 'starting'
   error.value = ''
   report.value = null
   feedback.value = ''
@@ -71,6 +83,7 @@ async function start() {
   } catch (cause: any) {
     error.value = cause?.data?.error ?? 'Could not start the interview.'
   } finally {
+    loadingStage.value = null
     busy.value = false
   }
 }
@@ -78,6 +91,8 @@ async function start() {
 async function submitAnswer() {
   if (!active.value || !answer.value.trim()) return
   busy.value = true
+  // The final answer also produces the report on the server, so it reviews.
+  loadingStage.value = active.value.questionNumber >= active.value.totalQuestions ? 'reviewing' : 'generating'
   error.value = ''
   try {
     const result = await $fetch<{
@@ -100,6 +115,7 @@ async function submitAnswer() {
   } catch (cause: any) {
     error.value = cause?.data?.error ?? 'Could not submit your answer.'
   } finally {
+    loadingStage.value = null
     busy.value = false
   }
 }
@@ -107,6 +123,7 @@ async function submitAnswer() {
 async function endInterview() {
   if (!active.value || busy.value) return
   busy.value = true
+  loadingStage.value = 'reviewing'
   error.value = ''
   try {
     const result = await $fetch<{ report: typeof report.value }>(`/api/interviews/${active.value.id}/end`, { method: 'POST' })
@@ -116,6 +133,7 @@ async function endInterview() {
   } catch (cause: any) {
     error.value = cause?.data?.error ?? 'Could not end the interview.'
   } finally {
+    loadingStage.value = null
     busy.value = false
   }
 }
@@ -287,5 +305,29 @@ useHead({ title: 'AI Interview' })
         </article>
       </div>
     </section>
+
+    <Transition name="interview-loading-fade">
+      <InterviewLoading v-if="activeLoadingStage" :stage="activeLoadingStage" />
+    </Transition>
   </div>
 </template>
+
+<style scoped>
+.interview-loading-fade-enter-active {
+  transition: opacity 0.3s ease;
+}
+.interview-loading-fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.interview-loading-fade-enter-from,
+.interview-loading-fade-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interview-loading-fade-enter-active,
+  .interview-loading-fade-leave-active {
+    transition: none;
+  }
+}
+</style>
