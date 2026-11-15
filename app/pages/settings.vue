@@ -89,7 +89,7 @@ useHead({ title: 'Settings' })
       <p class="mt-1 text-[13px] text-sub">You're signed in with Google. Signing out keeps your data linked to your account.</p>
       <UButton
         icon="i-lucide-log-out"
-        class="mt-4 !bg-red-600 !text-white hover:!bg-red-700 !border-red-600"
+        class="mt-4 border-red-600! bg-red-600! text-white! hover:bg-red-700!"
         @click="logout"
       >
         Sign out

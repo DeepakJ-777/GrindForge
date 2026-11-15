@@ -21,7 +21,7 @@ const thisWeekDays = computed(() => new Set(props.logs.filter(l => isThisWeek(l.
 <template>
   <div class="flex flex-col gap-4">
     <!-- This week (real data) -->
-    <div class="gf-card flex flex-col p-5 xl:min-h-[265px]">
+    <div class="gf-card flex flex-col p-5 xl:min-h-66.25">
       <div class="flex items-center gap-2.5">
         <span class="flex size-8 items-center justify-center rounded-[9px] bg-lav">
           <UIcon name="i-lucide-calendar-check" class="size-4 text-primary-600" />

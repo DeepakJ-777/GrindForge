@@ -41,6 +41,23 @@ Local D1 state persists in `.wrangler/state/v3`. Secrets for local dev live in `
 
 `BETTER_AUTH_URL` is set per environment (`.dev.vars` locally, `vars` in `wrangler.jsonc` for prod) and `BETTER_AUTH_SECRET` is already configured in both.
 
+d## GitHub integration setup
+
+The GitHub integration uses a separate GitHub OAuth App; it is not the site login provider.
+
+1. Create an OAuth App at <https://github.com/settings/developers>.
+2. Set its homepage URL to the site origin and its authorization callback URL to:
+   - `http://localhost:3000/api/integrations/github/callback` for local development
+   - `https://placement.waterman777.workers.dev/api/integrations/github/callback` for production
+3. Add `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` to `.dev.vars` locally.
+4. Configure both production secrets before deploying:
+   ```bash
+   npx wrangler secret put GITHUB_CLIENT_ID
+   npx wrangler secret put GITHUB_CLIENT_SECRET
+   ```
+
+A GitHub OAuth App accepts one callback URL. Use separate local and production apps if both environments need to work at the same time.
+
 ## Database migrations
 
 ```bash

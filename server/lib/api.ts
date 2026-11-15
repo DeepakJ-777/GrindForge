@@ -1415,7 +1415,7 @@ app.get('/integrations/github/connect', requireAuth, async (c) => {
   const clientId = c.env.GITHUB_CLIENT_ID
 
   if (!clientId || !c.env.GITHUB_CLIENT_SECRET) {
-    return c.json({ error: 'GitHub OAuth is not configured.' }, 500)
+    return c.redirect('/integrations?github_error=GitHub%20OAuth%20is%20not%20configured%20on%20the%20server.', 302)
   }
 
   const state = crypto.randomUUID()
@@ -1433,14 +1433,6 @@ app.get('/integrations/github/connect', requireAuth, async (c) => {
   authorizeUrl.searchParams.set('scope', 'read:user')
   authorizeUrl.searchParams.set('state', state)
 
-  // "Use another account": sign the user out of GitHub first so the OAuth
-  // screen offers a fresh login instead of silently re-using the session.
-  if (c.req.query('switch') === '1') {
-    const logoutUrl = new URL('https://github.com/logout')
-    logoutUrl.searchParams.set('return_to', authorizeUrl.toString())
-    return c.redirect(logoutUrl.toString(), 302)
-  }
-
   return c.redirect(authorizeUrl.toString(), 302)
 })
 
@@ -1448,6 +1440,8 @@ app.get('/integrations/github/connect', requireAuth, async (c) => {
 app.get('/integrations/github/callback', requireAuth, async (c) => {
   const code = c.req.query('code')
   const returnedState = c.req.query('state')
+  const oauthError = c.req.query('error')
+  const oauthErrorDescription = c.req.query('error_description')
   const cookieHeader = c.req.header('Cookie') ?? ''
   const savedState = getCookieValue(cookieHeader, GITHUB_STATE_COOKIE)
 
@@ -1457,8 +1451,13 @@ app.get('/integrations/github/callback', requireAuth, async (c) => {
 
   c.header('Set-Cookie', clearCookie)
 
+  if (oauthError) {
+    const message = oauthErrorDescription || 'GitHub authorization was cancelled.'
+    return c.redirect(`/integrations?github_error=${encodeURIComponent(message)}`, 302)
+  }
+
   if (!code || !returnedState || !savedState || returnedState !== savedState) {
-    return c.text('GitHub authorization state validation failed. Please try connecting again.', 400)
+    return c.redirect('/integrations?github_error=GitHub%20authorization%20could%20not%20be%20verified.%20Please%20try%20again.', 302)
   }
 
   const callbackUrl = `${new URL(c.req.url).origin}/api/integrations/github/callback`
@@ -1481,11 +1480,13 @@ app.get('/integrations/github/callback', requireAuth, async (c) => {
     const tokenData = await tokenResponse.json() as {
       access_token?: string
       error?: string
+      error_description?: string
     }
 
     if (!tokenResponse.ok || !tokenData.access_token) {
       console.error('GitHub token exchange failed:', tokenData.error ?? tokenResponse.status)
-      return c.text('GitHub authorization failed. Please try again.', 502)
+      const message = tokenData.error_description || 'GitHub authorization failed. Please try again.'
+      return c.redirect(`/integrations?github_error=${encodeURIComponent(message)}`, 302)
     }
 
     const userResponse = await fetch('https://api.github.com/user', {
@@ -1499,7 +1500,7 @@ app.get('/integrations/github/callback', requireAuth, async (c) => {
 
     if (!userResponse.ok) {
       console.error('GitHub profile request failed:', userResponse.status)
-      return c.text('Could not retrieve your GitHub profile.', 502)
+      return c.redirect('/integrations?github_error=Could%20not%20retrieve%20your%20GitHub%20profile.', 302)
     }
 
     const githubUser = await userResponse.json() as {
@@ -1508,7 +1509,7 @@ app.get('/integrations/github/callback', requireAuth, async (c) => {
     }
 
     if (!githubUser.login || typeof githubUser.id !== 'number') {
-      return c.text('GitHub returned an invalid profile.', 502)
+      return c.redirect('/integrations?github_error=GitHub%20returned%20an%20invalid%20profile.', 302)
     }
 
     const db = getDb(c.env)
@@ -1552,7 +1553,7 @@ app.get('/integrations/github/callback', requireAuth, async (c) => {
     return c.redirect('/integrations?github=connected', 302)
   } catch (error) {
     console.error('GitHub OAuth callback failed:', error)
-    return c.text('Could not complete GitHub authorization. Please try again.', 502)
+    return c.redirect('/integrations?github_error=Could%20not%20complete%20GitHub%20authorization.%20Please%20try%20again.', 302)
   }
 })
 
@@ -1640,6 +1641,23 @@ app.post('/integrations/github/sync', requireAuth, async (c) => {
 
     if (!response.ok) {
       console.error('GitHub GraphQL HTTP error:', response.status)
+      // 401 means the stored OAuth token was revoked/expired (e.g. the app
+      // secret was rotated or access was revoked in GitHub settings). Only a
+      // fresh authorization can fix it, so tell the user to reconnect.
+      if (response.status === 401) {
+        await db
+          .update(integrations)
+          .set({
+            githubAccessToken: null,
+            updatedAt: now,
+          })
+          .where(eq(integrations.userId, c.var.user.id))
+
+        return c.json(
+          { error: 'Your GitHub connection expired. Reconnect GitHub, then sync again.' },
+          401,
+        )
+      }
       return c.json(
         { error: 'GitHub could not provide activity right now.' },
         502,

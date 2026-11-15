@@ -1,5 +1,5 @@
 {
-  "name": "Placement",
+  "name": "placement",
   "type": "module",
   "private": true,
   "scripts": {

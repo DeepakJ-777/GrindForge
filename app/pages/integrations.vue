@@ -4,6 +4,9 @@ import { ref, onMounted } from 'vue'
 
 useHead({ title: 'Integrations | GRINDFORGE' })
 
+const route = useRoute()
+const router = useRouter()
+
 interface LeetCodeStats {
   username: string
   realName: string | null
@@ -34,6 +37,8 @@ const githubStats = ref<{
   totalContributions: number
 } | null>(null)
 const githubLastSyncedAt = ref<string | null>(null)
+const githubError = ref('')
+const githubMessage = ref('')
 
 async function loadIntegrations() {
   loading.value = true
@@ -126,8 +131,8 @@ async function syncLeetCode() {
 }
 async function syncGitHub() {
   githubSyncing.value = true
-  error.value = ''
-  message.value = ''
+  githubError.value = ''
+  githubMessage.value = ''
 
   try {
     const result = await $fetch<{
@@ -146,19 +151,56 @@ async function syncGitHub() {
     githubLastSyncedAt.value = result.lastSyncedAt
     githubConnected.value = true
 
-    message.value = 'GitHub contributions synced successfully!'
+    githubMessage.value = 'GitHub contributions synced successfully!'
   } catch (cause: any) {
-    error.value = cause?.data?.error
+    githubError.value = cause?.data?.error
       ?? 'Could not sync GitHub. Please try again.'
+
+    if (cause?.statusCode === 401 || cause?.response?.status === 401) {
+      githubConnected.value = false
+    }
   } finally {
     githubSyncing.value = false
   }
 }
+
+async function disconnectGitHub() {
+  githubSyncing.value = true
+  githubError.value = ''
+  githubMessage.value = ''
+
+  try {
+    await $fetch('/api/integrations/github', { method: 'DELETE' })
+    githubUsername.value = null
+    githubConnected.value = false
+    githubStats.value = null
+    githubLastSyncedAt.value = null
+    githubMessage.value = 'GitHub disconnected. You can now connect another account.'
+  } catch (cause: any) {
+    githubError.value = cause?.data?.error
+      ?? 'Could not disconnect GitHub. Please try again.'
+  } finally {
+    githubSyncing.value = false
+  }
+}
+
 function formatDate(value: string) {
   return new Date(value).toLocaleString()
 }
 
-onMounted(loadIntegrations)
+onMounted(async () => {
+  await loadIntegrations()
+
+  if (typeof route.query.github_error === 'string') {
+    githubError.value = route.query.github_error
+  } else if (route.query.github === 'connected') {
+    githubMessage.value = 'GitHub connected successfully. Sync to import your contributions.'
+  }
+
+  if ('github' in route.query || 'github_error' in route.query) {
+    await router.replace({ path: '/integrations' })
+  }
+})
 </script>
 
 <template>
@@ -332,12 +374,14 @@ onMounted(loadIntegrations)
     Sync GitHub
   </UButton>
 
-  <a
-    href="/api/integrations/github/connect?switch=1"
-    class="inline-flex items-center justify-center rounded-lg border border-line px-4 py-2.5 text-sm font-medium text-ink hover:bg-canvas"
+  <UButton
+    variant="outline"
+    color="error"
+    class="!text-red-600 !border-red-300 hover:!bg-red-50 hover:!text-red-700"
+    @click="disconnectGitHub"
   >
-    Use another account
-  </a>
+    Disconnect
+  </UButton>
 </div>
       </div>
 
@@ -349,6 +393,13 @@ onMounted(loadIntegrations)
   Connect GitHub
 </a>
       </div>
+
+      <p v-if="githubMessage" role="status" class="mt-4 text-sm text-green-700">
+        {{ githubMessage }}
+      </p>
+      <p v-if="githubError" role="alert" class="mt-4 text-sm text-red-600">
+        {{ githubError }}
+      </p>
     </section>
     <section class="gf-card p-5">
       <h3 class="text-sm font-semibold text-ink">About this integration</h3>
