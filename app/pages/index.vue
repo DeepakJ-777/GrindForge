@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
 
 const { user } = useAuth()
 const settings = useSettings()
@@ -54,6 +54,60 @@ const { data: integrationsData } = useFetch<DashboardIntegrations>(
   },
 )
 
+const GITHUB_SYNC_INTERVAL_MS = 5 * 60 * 1000
+let githubSyncTimer: ReturnType<typeof setInterval> | undefined
+let githubSyncing = false
+
+function githubSyncIsDue() {
+  const lastSyncedAt = integrationsData.value.github.lastSyncedAt
+  if (!lastSyncedAt) return true
+
+  const lastSyncTime = Date.parse(lastSyncedAt)
+  return !Number.isFinite(lastSyncTime)
+    || Date.now() - lastSyncTime >= GITHUB_SYNC_INTERVAL_MS
+}
+
+async function syncGitHubContributions() {
+  if (
+    githubSyncing
+    || !integrationsData.value.github.connected
+    || !githubSyncIsDue()
+  ) return
+
+  githubSyncing = true
+
+  try {
+    await $fetch('/api/integrations/github/sync', { method: 'POST' })
+    await Promise.all([
+      refreshNuxtData('dashboard:integrations'),
+      refreshNuxtData('dashboard:heatmap'),
+    ])
+  } catch {
+    // Keep the last successful snapshot when GitHub is temporarily unavailable.
+  } finally {
+    githubSyncing = false
+  }
+}
+
+function syncGitHubWhenVisible() {
+  if (document.visibilityState === 'visible') {
+    void syncGitHubContributions()
+  }
+}
+
+onMounted(() => {
+  void syncGitHubContributions()
+  githubSyncTimer = setInterval(
+    () => void syncGitHubContributions(),
+    GITHUB_SYNC_INTERVAL_MS,
+  )
+  document.addEventListener('visibilitychange', syncGitHubWhenVisible)
+})
+
+onBeforeUnmount(() => {
+  if (githubSyncTimer) clearInterval(githubSyncTimer)
+  document.removeEventListener('visibilitychange', syncGitHubWhenVisible)
+})
 
 const { data: heatmap } = useFetch<{ days: HeatmapDay[] }>('/api/heatmap', {
   key: 'dashboard:heatmap',

@@ -1,6 +1,6 @@
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 useHead({ title: 'Integrations | GRINDFORGE' })
 
@@ -39,6 +39,17 @@ const githubStats = ref<{
 const githubLastSyncedAt = ref<string | null>(null)
 const githubError = ref('')
 const githubMessage = ref('')
+
+const GITHUB_SYNC_INTERVAL_MS = 5 * 60 * 1000
+let githubSyncTimer: ReturnType<typeof setInterval> | undefined
+
+function githubSyncIsDue() {
+  if (!githubLastSyncedAt.value) return true
+
+  const lastSyncTime = Date.parse(githubLastSyncedAt.value)
+  return !Number.isFinite(lastSyncTime)
+    || Date.now() - lastSyncTime >= GITHUB_SYNC_INTERVAL_MS
+}
 
 async function loadIntegrations() {
   loading.value = true
@@ -129,10 +140,18 @@ async function syncLeetCode() {
     syncing.value = false
   }
 }
-async function syncGitHub() {
+async function syncGitHub(showFeedback = true) {
+  if (
+    githubSyncing.value
+    || !githubConnected.value
+    || (!showFeedback && !githubSyncIsDue())
+  ) return
+
   githubSyncing.value = true
-  githubError.value = ''
-  githubMessage.value = ''
+  if (showFeedback) {
+    githubError.value = ''
+    githubMessage.value = ''
+  }
 
   try {
     const result = await $fetch<{
@@ -150,15 +169,21 @@ async function syncGitHub() {
     githubUsername.value = result.stats.username
     githubLastSyncedAt.value = result.lastSyncedAt
     githubConnected.value = true
+    clearNuxtData(['dashboard:integrations', 'dashboard:heatmap'])
 
-    githubMessage.value = 'GitHub contributions synced successfully!'
-  } catch (cause: any) {
-    githubError.value = cause?.data?.error
-      ?? 'Could not sync GitHub. Please try again.'
-
-    if (cause?.statusCode === 401 || cause?.response?.status === 401) {
-      githubConnected.value = false
+    if (showFeedback) {
+      githubMessage.value = 'GitHub contributions synced successfully!'
     }
+  } catch (cause: any) {
+    const connectionExpired = cause?.statusCode === 401
+      || cause?.response?.status === 401
+
+    if (showFeedback || connectionExpired) {
+      githubError.value = cause?.data?.error
+        ?? 'Could not sync GitHub. Please try again.'
+    }
+
+    if (connectionExpired) githubConnected.value = false
   } finally {
     githubSyncing.value = false
   }
@@ -188,18 +213,34 @@ function formatDate(value: string) {
   return new Date(value).toLocaleString()
 }
 
+function syncGitHubWhenVisible() {
+  if (document.visibilityState === 'visible') void syncGitHub(false)
+}
+
 onMounted(async () => {
   await loadIntegrations()
 
   if (typeof route.query.github_error === 'string') {
     githubError.value = route.query.github_error
   } else if (route.query.github === 'connected') {
-    githubMessage.value = 'GitHub connected successfully. Sync to import your contributions.'
+    githubMessage.value = 'GitHub connected successfully.'
   }
 
   if ('github' in route.query || 'github_error' in route.query) {
     await router.replace({ path: '/integrations' })
   }
+
+  void syncGitHub(false)
+  githubSyncTimer = setInterval(
+    () => void syncGitHub(false),
+    GITHUB_SYNC_INTERVAL_MS,
+  )
+  document.addEventListener('visibilitychange', syncGitHubWhenVisible)
+})
+
+onBeforeUnmount(() => {
+  if (githubSyncTimer) clearInterval(githubSyncTimer)
+  document.removeEventListener('visibilitychange', syncGitHubWhenVisible)
 })
 </script>
 
@@ -369,7 +410,7 @@ onMounted(async () => {
   <UButton
     :loading="githubSyncing"
     :disabled="githubSyncing"
-    @click="syncGitHub"
+    @click="syncGitHub()"
   >
     Sync GitHub
   </UButton>
